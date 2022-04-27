@@ -69,4 +69,5 @@ SELECT NOTAFISCAL_CURSO.DS_VENDEDOR,
        MAX(NOTAFISCAL_CURSO.VL_NOTA)
   FROM NOTAFISCAL_CURSO
 GROUP BY NOTAFISCAL_CURSO.DS_VENDEDOR;     
-----------------------------------------------------------------  
+----------------------------------------------------------------
+SELECT * FROM ABASTECIMENTOCURSO;
