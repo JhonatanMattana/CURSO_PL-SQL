@@ -59,6 +59,9 @@ create or replace package PACK_NOTAFISCAL is
  --------------------------------------------------------------------------------
  --------------------------------------------------------------------------------
  FUNCTION RETORNA_VALORTOTALNOTAS RETURN NUMBER;
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ FUNCTION RETORNA_NOMECLIENTES RETURN VARCHAR2;
 end PACK_NOTAFISCAL;
 /
 create or replace package body PACK_NOTAFISCAL is
@@ -508,5 +511,31 @@ create or replace package body PACK_NOTAFISCAL is
    
    RETURN V_VL_SUMNF;  
  END;
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ -- Crie uma função que retorne o nome de todos os clientes, sem repetir, em
+ -- uma string separado por vírgulas
+ FUNCTION RETORNA_NOMECLIENTES RETURN VARCHAR2 IS
+   V_DS_NOMECLIENTES VARCHAR2(32000);
+   
+   V_COUNT NUMBER;
+   
+   CURSOR CUR_CLIENTES IS
+     SELECT DISTINCT NOTAFISCAL_CURSO.DS_CLIENTE
+       FROM NOTAFISCAL_CURSO;
+ BEGIN
+   V_COUNT := 0;
+   FOR I IN CUR_CLIENTES LOOP
+     V_COUNT := V_COUNT + 1;
+     IF V_COUNT = 1 THEN
+       V_DS_NOMECLIENTES := I.DS_CLIENTE;
+     ELSE
+       V_DS_NOMECLIENTES := V_DS_NOMECLIENTES || ', ' || I.DS_CLIENTE;
+     END IF;    
+   END LOOP;  
+   
+   RETURN V_DS_NOMECLIENTES;
+   
+ END;      
 end PACK_NOTAFISCAL;
 /
