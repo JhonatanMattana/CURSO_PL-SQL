@@ -43,7 +43,19 @@ create or replace package PACK_NOTAFISCAL is
  --------------------------------------------------------------------------------
  --------------------------------------------------------------------------------
  FUNCTION RETORNA_QUANTIDADEDECARROS (I_NR_ANOMODELO IN CARRO_CURSO.NR_ANOMODELO%TYPE)
-                                                      RETURN NUMBER;                                                                                  
+                                                      RETURN NUMBER;       
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------                                                     
+ FUNCTION RETORNA_VALORNOTA(I_NR_NOTA IN NOTAFISCAL_CURSO.NR_NOTA%TYPE)
+                                      RETURN NOTAFISCAL_CURSO.VL_NOTA%TYPE;
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------                                      
+ FUNCTION RETORNA_QTDENOTAS(I_DT_COMPRA IN NOTAFISCAL_CURSO.DT_COMPRA%TYPE)
+                                       RETURN NUMBER;                                                                                                                                                                  
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ FUNCTION RETORNA_QTVENDAS_VENDEDOR (I_DS_VENDEDOR IN NOTAFISCAL_CURSO.DS_VENDEDOR%TYPE)
+                                                  RETURN NUMBER;
 end PACK_NOTAFISCAL;
 /
 create or replace package body PACK_NOTAFISCAL is
@@ -413,6 +425,67 @@ create or replace package body PACK_NOTAFISCAL is
   EXCEPTION
     WHEN OTHERS THEN
       RETURN NULL;  
-  END;                                                                                                                                                                                 
+  END;
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ -- Crie uma função que receba o número de uma nota e retorne o seu valor
+ FUNCTION RETORNA_VALORNOTA(I_NR_NOTA IN NOTAFISCAL_CURSO.NR_NOTA%TYPE)
+                                      RETURN NOTAFISCAL_CURSO.VL_NOTA%TYPE IS
+   V_VL_NOTA NOTAFISCAL_CURSO.VL_NOTA%TYPE;
+ BEGIN
+   SELECT NOTAFISCAL_CURSO.VL_NOTA
+     INTO V_VL_NOTA
+     FROM NOTAFISCAL_CURSO
+    WHERE NOTAFISCAL_CURSO.NR_NOTA = I_NR_NOTA;
+    
+   RETURN V_VL_NOTA; 
+ EXCEPTION
+  WHEN OTHERS THEN
+    RETURN NULL; 
+ END; 
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------                                    
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ -- Crie uma função que receba a data e retorne a quantidade de notas 
+ -- emitidas naquela data  
+ FUNCTION RETORNA_QTDENOTAS(I_DT_COMPRA IN NOTAFISCAL_CURSO.DT_COMPRA%TYPE)
+                                        RETURN NUMBER IS
+   V_COUNT NUMBER;
+ BEGIN
+   SELECT COUNT(*)
+     INTO V_COUNT
+     FROM NOTAFISCAL_CURSO
+    WHERE NOTAFISCAL_CURSO.DT_COMPRA = I_DT_COMPRA; 
+   
+   RETURN V_COUNT; 
+    
+ EXCEPTION
+   WHEN OTHERS THEN
+     RETURN NULL;
+ END;                                        
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ -- Crie uma função que receba o nome de um vendedor e retorne quantas
+ -- notas foram emitidas por ele
+ FUNCTION RETORNA_QTVENDAS_VENDEDOR (I_DS_VENDEDOR IN NOTAFISCAL_CURSO.DS_VENDEDOR%TYPE)
+                                                   RETURN NUMBER IS
+   V_COUNT NUMBER;                                                  
+ BEGIN
+   SELECT COUNT(*)
+     INTO V_COUNT
+     FROM NOTAFISCAL_CURSO
+    WHERE NOTAFISCAL_CURSO.DS_VENDEDOR = I_DS_VENDEDOR;
+    
+   RETURN V_COUNT;
+     
+ EXCEPTION
+   WHEN OTHERS THEN
+     RETURN NULL;
+ END;                                                                                                                                                                                                                           
 end PACK_NOTAFISCAL;
 /
