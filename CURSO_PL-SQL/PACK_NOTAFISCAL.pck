@@ -39,7 +39,11 @@ create or replace package PACK_NOTAFISCAL is
                              I_VL_ITEM  IN ITEMNOTA_CURSO.VL_ITEM%TYPE,
                              I_DS_ITEM  IN ITEMNOTA_CURSO.DS_ITEM%TYPE,
                              I_NR_NOTA  IN ITEMNOTA_CURSO.NR_NOTA%TYPE,
-                             O_MENSAGEM OUT VARCHAR2);                                                            
+                             O_MENSAGEM OUT VARCHAR2); 
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ FUNCTION RETORNA_QUANTIDADEDECARROS (I_NR_ANOMODELO IN CARRO_CURSO.NR_ANOMODELO%TYPE)
+                                                      RETURN NUMBER;                                                                                  
 end PACK_NOTAFISCAL;
 /
 create or replace package body PACK_NOTAFISCAL is
@@ -332,7 +336,7 @@ create or replace package body PACK_NOTAFISCAL is
     
     BEGIN
       SELECT COUNT(*)
-        INTO V_VOUNT
+        INTO V_COUNT
         FROM NOTAFISCAL_CURSO
        WHERE NOTAFISCAL_CURSO.NR_NOTA = I_NR_NOTA;
     EXCEPTION
@@ -372,21 +376,43 @@ create or replace package body PACK_NOTAFISCAL is
         BEGIN
           UPDATE ITEMNOTA_CURSO
             SET VL_ITEM = I_VL_ITEM,
-                DS_ITEM = I_DS_ITEM,
+                DS_ITEM = I_DS_ITEM
           WHERE ID_ITEM = I_ID_ITEM;    
         EXCEPTION
           WHEN OTHERS THEN
             O_MENSAGEM := 'Erro ao atualizar o item: ' || SQLERRM;
         END;
       WHEN OTHERS THEN
-        O_MENSAGEM := 'Erro ao atualizar o item: ' || SQLERRM;
+        O_MENSAGEM := 'Erro ao inserir a nota: ' || SQLERRM;
     END;
+    
+    COMMIT;
     
   EXCEPTION
     WHEN E_GERAL THEN
       O_MENSAGEM := '[INSERE_ITEMNOTA] ' || O_MENSAGEM;
     WHEN OTHERS THEN
       O_MENSAGEM := 'Erro no procedimento que insere nota: ' || SQLERRM;  
-  END;                                                                                                                                
+  END;     
+  --------------------------------------------------------------------------------
+  --------------------------------------------------------------------------------
+  --------------------------------------------------------------------------------
+  --------------------------------------------------------------------------------
+  FUNCTION RETORNA_QUANTIDADEDECARROS (I_NR_ANOMODELO IN CARRO_CURSO.NR_ANOMODELO%TYPE)
+                                                      RETURN NUMBER IS
+    V_COUNT NUMBER;
+  BEGIN
+  
+    SELECT COUNT(*)
+      INTO V_COUNT
+      FROM CARRO_CURSO
+     WHERE CARRO_CURSO.NR_ANOMODELO = I_NR_ANOMODELO;  
+  
+    RETURN V_COUNT;
+  
+  EXCEPTION
+    WHEN OTHERS THEN
+      RETURN NULL;  
+  END;                                                                                                                                                                                 
 end PACK_NOTAFISCAL;
 /
