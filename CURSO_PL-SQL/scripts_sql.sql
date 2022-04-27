@@ -57,3 +57,7 @@ CREATE TABLE CARRO_CURSO(
 );
 
 SELECT * FROM CARRO_CURSO;
+----------------------------------------------------------------
+
+SELECT PACK_NOTAFISCAL.RETORNA_QUANTIDADEDECARROS(1990)
+  FROM DUAL;

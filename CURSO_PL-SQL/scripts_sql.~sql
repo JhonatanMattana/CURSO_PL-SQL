@@ -43,6 +43,8 @@ CREATE TABLE PESSOA_CURSO(
 
 SELECT * FROM PESSOA_CURSO;
 
+----------------------------------------------------------------
+
 CREATE TABLE CARRO_CURSO(
   NR_PLACA VARCHAR2(7),
   DS_MODELO VARCHAR2(100),
@@ -55,3 +57,7 @@ CREATE TABLE CARRO_CURSO(
 );
 
 SELECT * FROM CARRO_CURSO;
+----------------------------------------------------------------
+
+SELECT PACK_NOTAFISCAL.RETORNA_QUANTIDADEDECARROS(48)
+  FROM DUAL;
