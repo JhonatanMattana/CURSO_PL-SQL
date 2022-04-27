@@ -64,7 +64,7 @@ create or replace package PACK_NOTAFISCAL is
  FUNCTION RETORNA_NOMECLIENTES RETURN VARCHAR2;
  --------------------------------------------------------------------------------
  -------------------------------------------------------------------------------- 
- FUNCTION TESTE_VETOR RETURN VARCHAR2
+ FUNCTION TESTE_VETOR RETURN VARCHAR2;
 
 end PACK_NOTAFISCAL;
 /
@@ -547,10 +547,14 @@ create or replace package body PACK_NOTAFISCAL is
  FUNCTION TESTE_VETOR RETURN VARCHAR2 IS
    TYPE T_CLIENTES IS TABLE OF VARCHAR2(100) INDEX BY BINARY_INTEGER;
    V_CLIENTES T_CLIENTES;
+   
+   CURSOR CUR_CLIENTES IS
+     SELECT DISTINCT NOTAFISCAL_CURSO.DS_CLIENTE
+       FROM NOTAFISCAL_CURSO;
  BEGIN
-   V_CLIENTES(1) := 'Daniel';
-   V_CLIENTES(2) := 'Kedssy'; 
-   V_CLIENTES(3) := 'Matheus';
+   FOR I IN CUR_CLIENTES LOOP
+     V_CLIENTES(CUR_CLIENTES%ROWCOUNT) := I.DS_CLIENTE;
+   END LOOP;    
  
    RETURN V_CLIENTES(3); 
  END;
