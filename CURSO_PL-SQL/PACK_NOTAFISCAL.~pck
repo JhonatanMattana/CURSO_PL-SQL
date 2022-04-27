@@ -65,6 +65,9 @@ create or replace package PACK_NOTAFISCAL is
  --------------------------------------------------------------------------------
  -------------------------------------------------------------------------------- 
  FUNCTION TESTE_VETOR RETURN VARCHAR2;
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ FUNCTION RETORNA_CLIENTEVALOR RETURN VARCHAR2;
 
 end PACK_NOTAFISCAL;
 /
@@ -555,7 +558,7 @@ create or replace package body PACK_NOTAFISCAL is
        FROM NOTAFISCAL_CURSO;
  BEGIN
    FOR I IN CUR_CLIENTES LOOP
-     V_CLIENTES(CUR_CLIENTES%ROWCOUNT) := I.DS_CLIENTE;
+     V_CLIENTES( CUR_CLIENTES%ROWCOUNT) := I.DS_CLIENTE;
    END LOOP;    
  
    FOR I IN 1..V_CLIENTES.COUNT LOOP
@@ -565,6 +568,32 @@ create or replace package body PACK_NOTAFISCAL is
        V_DS_CLIENTES := V_DS_CLIENTES || ', ' || V_CLIENTES(I);  
      END IF;
    END LOOP;
+   
+   RETURN V_DS_CLIENTES;
+ END;
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ FUNCTION RETORNA_CLIENTEVALOR RETURN VARCHAR2 IS
+   TYPE R_CLIENTE IS RECORD(DS_CLIENTE NOTAFISCAL_CURSO.DS_CLIENTE%TYPE,
+                            VL_CLIENTE NUMBER);
+   TYPE T_CLIENTE IS TABLE OF R_CLIENTE INDEX BY BINARY_INTEGER;
+   
+   V_CLIENTE T_CLIENTE;
+   
+   CURSOR CUR_CLIENTES IS
+     SELECT NOTAFISCAL_CURSO.DS_CLIENTE, SUM(NOTAFISCAL_CURSO.VL_NOTA) VL_CLIENTE
+       FROM NOTAFISCAL_CURSO
+      GROUP BY NOTAFISCAL_CURSO.DS_CLIENTE;                              
+ BEGIN
+   FOR I IN CUR_CLIENTES LOOP
+     V_CLIENTE(CUR_CLIENTES%ROWCOUNT).DS_CLIENTE := I.DS_CLIENTE;
+     V_CLIENTE(CUR_CLIENTES%ROWCOUNT).VL_CLIENTE := I.VL_CLIENTE;
+   END LOOP;
+   
+   RETURN V_CLIENTE(2).DS_CLIENTE || ' - ' || V_CLIENTE(2).VL_CLIENTE;
+   
  END;
 end PACK_NOTAFISCAL;
 /
