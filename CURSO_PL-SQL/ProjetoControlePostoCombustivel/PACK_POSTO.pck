@@ -22,6 +22,12 @@ create or replace package PACK_POSTO is
                          I_CD_PROPRIETARIO IN PROPRIETARIOCURSO.CD_PROPRIETARIO%TYPE,
                          I_KM_ATUAL        IN VEICULOCURSO.KM_ATUAL%TYPE,
                          O_MENSAGEM        OUT VARCHAR2);
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ PROCEDURE GRAVA_FRENTISTA(IO_CD_FRENTISTA IN OUT FRENTISTACURSO.CD_FRENTISTA%TYPE,
+                           I_NM_FRENTISTA  IN FRENTISTACURSO.NM_FRENTISTA%TYPE,
+                           I_PC_COMISSAO   IN FRENTISTACURSO.PC_COMISSAO%TYPE,
+                           O_MENSAGEM      OUT VARCHAR2);
 end PACK_POSTO;
 /
 create or replace package body PACK_POSTO is
@@ -278,6 +284,74 @@ create or replace package body PACK_POSTO is
    WHEN OTHERS THEN
      ROLLBACK;
      O_MENSAGEM := '[GRAVA_VEICULO] Erro no procedimento que insere veículo: ' || SQLERRM;  
- END;                                                    
+ END;  
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ PROCEDURE GRAVA_FRENTISTA(IO_CD_FRENTISTA IN OUT FRENTISTACURSO.CD_FRENTISTA%TYPE,
+                           I_NM_FRENTISTA  IN FRENTISTACURSO.NM_FRENTISTA%TYPE,
+                           I_PC_COMISSAO   IN FRENTISTACURSO.PC_COMISSAO%TYPE,
+                           O_MENSAGEM      OUT VARCHAR2) IS
+    E_GERAL EXCEPTION;
+ BEGIN
+   IF I_NM_FRENTISTA IS NULL THEN
+     O_MENSAGEM := 'O nome do frentista precisa ser informado!';
+     RAISE E_GERAL;
+   END IF;  
+   
+   IF IO_CD_FRENTISTA IS NULL THEN
+     BEGIN
+       SELECT MAX(FRENTISTACURSO.CD_FRENTISTA)
+         INTO IO_CD_FRENTISTA
+         FROM FRENTISTACURSO;
+     EXCEPTION
+       WHEN OTHERS THEN
+         IO_CD_FRENTISTA := 0;
+     END;
+     
+     IO_CD_FRENTISTA := NVL(IO_CD_FRENTISTA, 0) + 1;
+     
+   END IF;   
+   
+   BEGIN 
+     INSERT INTO FRENTISTACURSO(
+       CD_FRENTISTA,
+       NM_FRENTISTA,
+       PC_COMISSAO,
+       DT_RECORD)
+     VALUES(
+       IO_CD_FRENTISTA,
+       I_NM_FRENTISTA,
+       I_PC_COMISSAO,
+       SYSDATE);
+   EXCEPTION
+     WHEN DUP_VAL_ON_INDEX THEN
+       BEGIN
+         UPDATE FRENTISTACURSO
+            SET NM_FRENTISTA = NVL(I_NM_FRENTISTA, NM_FRENTISTA),
+                PC_COMISSAO = NVL(I_PC_COMISSAO, 0),
+                DT_REFRESH = SYSDATE
+          WHERE CD_FRENTISTA = IO_CD_FRENTISTA;      
+       EXCEPTION
+         WHEN OTHERS THEN
+           O_MENSAGEM := 'Erro ao atualizar o frentista ' || IO_CD_FRENTISTA|| ': ' || SQLERRM;
+           RAISE E_GERAL;  
+       END;
+     WHEN OTHERS THEN
+       O_MENSAGEM := 'Erro ao gravar o frentista ' || IO_CD_FRENTISTA || ': ' || SQLERRM;
+       RAISE E_GERAL;
+   END;
+   
+   COMMIT;
+   
+ EXCEPTION
+   WHEN E_GERAL THEN
+     ROLLBACK;
+     O_MENSAGEM := '[GRAVA_FRENTISTA] ' || O_MENSAGEM;
+   WHEN OTHERS THEN
+     ROLLBACK;
+     O_MENSAGEM := '[GRAVA_FRENTISTA] Erro no procedimento que insere o frentista: ' || SQLERRM;  
+ END;                                                                                
 end PACK_POSTO;
 /
