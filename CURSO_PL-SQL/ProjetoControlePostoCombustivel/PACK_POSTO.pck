@@ -28,6 +28,14 @@ create or replace package PACK_POSTO is
                            I_NM_FRENTISTA  IN FRENTISTACURSO.NM_FRENTISTA%TYPE,
                            I_PC_COMISSAO   IN FRENTISTACURSO.PC_COMISSAO%TYPE,
                            O_MENSAGEM      OUT VARCHAR2);
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ PROCEDURE GARAVA_ABASTECIMENTO(IO_CD_ABASTECIMENTO IN OUT ABASTECIMENTOCURSO.CD_ABASTECIMENTO%TYPE,
+                                I_NR_PLACA          IN VEICULOCURSO.NR_PLACA%TYPE,
+                                I_CD_FRENTISTA      IN FRENTISTACURSO.CD_FRENTISTA%TYPE,
+                                I_QT_ABASTECIDA     IN ABASTECIMENTOCURSO.QT_ABASTECIDA%TYPE,
+                                I_KM_ABASTECIMENTO  IN ABASTECIMENTOCURSO.KM_ABASTECIMENTO%TYPE,
+                                O_MENSAGEM          OUT VARCHAR2);                           
 end PACK_POSTO;
 /
 create or replace package body PACK_POSTO is
@@ -352,6 +360,153 @@ create or replace package body PACK_POSTO is
    WHEN OTHERS THEN
      ROLLBACK;
      O_MENSAGEM := '[GRAVA_FRENTISTA] Erro no procedimento que insere o frentista: ' || SQLERRM;  
- END;                                                                                
+ END;  
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ PROCEDURE GARAVA_ABASTECIMENTO(IO_CD_ABASTECIMENTO IN OUT ABASTECIMENTOCURSO.CD_ABASTECIMENTO%TYPE,
+                                I_NR_PLACA          IN VEICULOCURSO.NR_PLACA%TYPE,
+                                I_CD_FRENTISTA      IN FRENTISTACURSO.CD_FRENTISTA%TYPE,
+                                I_QT_ABASTECIDA     IN ABASTECIMENTOCURSO.QT_ABASTECIDA%TYPE,
+                                I_KM_ABASTECIMENTO  IN ABASTECIMENTOCURSO.KM_ABASTECIMENTO%TYPE,
+                                O_MENSAGEM          OUT VARCHAR2) IS
+   E_GERAL          EXCEPTION;  
+   V_COUNT          NUMBER;
+   V_VL_COMBUSTIVEL COMBUSTIVELCURSO.VL_COMBUSTIVEL%TYPE;
+ BEGIN
+   IF I_NR_PLACA IS NULL THEN
+     O_MENSAGEM := 'A placa precisa ser informada!';
+     RAISE E_GERAL;
+   END IF;
+   
+   IF I_CD_FRENTISTA IS NULL THEN
+     O_MENSAGEM := 'O frentista precisa ser informado!';
+     RAISE E_GERAL;
+   END IF;
+   
+   IF I_QT_ABASTECIDA IS NULL THEN
+     O_MENSAGEM := 'A quantidade abastecida precisa ser informada!';
+     RAISE E_GERAL;
+   END IF;    
+     
+   BEGIN
+     SELECT COUNT(*)
+       INTO V_COUNT
+       FROM VEICULOCURSO
+      WHERE VEICULOCURSO.NR_PLACA = I_NR_PLACA;
+   EXCEPTION
+     WHEN OTHERS THEN
+       V_COUNT := 0;
+   END;
+   
+   IF NVL(V_COUNT, 0) = 0 THEN
+     O_MENSAGEM := 'Veiculo de placa ' || I_NR_PLACA || ' não cadastrado!';
+     RAISE E_GERAL;
+   END IF;  
+   
+   BEGIN 
+     SELECT COUNT(*)
+       INTO V_COUNT
+       FROM FRENTISTACURSO
+      WHERE FRENTISTACURSO.CD_FRENTISTA = I_CD_FRENTISTA; 
+   EXCEPTION
+     WHEN OTHERS THEN
+       V_COUNT := 0;
+   END;
+   
+   IF NVL(V_COUNT, 0) = 0 THEN
+     O_MENSAGEM := 'Frentista de codigo ' || I_CD_FRENTISTA || ' não cadastrado!';
+     RAISE E_GERAL;  
+   END IF;
+   
+   BEGIN
+     SELECT COMBUSTIVELCURSO.VL_COMBUSTIVEL
+       INTO V_VL_COMBUSTIVEL
+       FROM COMBUSTIVELCURSO,
+            VEICULOCURSO
+      WHERE COMBUSTIVELCURSO.CD_COMBUSTIVEL = VEICULOCURSO.CD_COMBUSTIVEL
+        AND VEICULOCURSO.NR_PLACA = I_NR_PLACA;    
+   EXCEPTION
+     WHEN OTHERS THEN
+       V_VL_COMBUSTIVEL := 0;
+   END;
+   
+   IF NVL(V_VL_COMBUSTIVEL, 0) = 0 THEN
+     O_MENSAGEM := 'Valor não cadastrado para o combustivel, ou zerado. Verifique o cadastro do combustivel.';
+     RAISE E_GERAL;
+   END IF;
+   
+
+   IF IO_CD_ABASTECIMENTO IS NULL THEN
+     BEGIN
+       SELECT MAX(ABASTECIMENTOCURSO.CD_ABASTECIMENTO)
+         INTO IO_CD_ABASTECIMENTO
+         FROM ABASTECIMENTOCURSO;
+     EXCEPTION
+       WHEN OTHERS THEN
+         IO_CD_ABASTECIMENTO := 0;
+     END;
+     
+     IO_CD_ABASTECIMENTO := NVL(IO_CD_ABASTECIMENTO, 0) + 1;
+     
+     BEGIN
+       UPDATE VEICULOCURSO
+          SET KM_ATUAL = I_KM_ABASTECIMENTO,
+              DT_REFRESH = SYSDATE
+        WHERE NR_PLACA = I_NR_PLACA; 
+     EXCEPTION
+       WHEN OTHERS THEN
+         O_MENSAGEM := 'Erro ao atualizar a quilometragem do veiculo ' || I_NR_PLACA || ': ' || SQLERRM;
+         RAISE E_GERAL;   
+     END;
+   END IF;  
+   
+   BEGIN
+     INSERT INTO ABASTECIMENTOCURSO(
+       CD_ABASTECIMENTO,
+       NR_PLACA,
+       CD_FRENTISTA,
+       QT_ABASTECIDA,
+       KM_ABASTECIMENTO,
+       VL_COMBUSTIVEL,
+       DT_RECORD)
+     VALUES(
+       IO_CD_ABASTECIMENTO,
+       I_NR_PLACA,
+       I_CD_FRENTISTA,
+       I_QT_ABASTECIDA,
+       I_KM_ABASTECIMENTO,
+       V_VL_COMBUSTIVEL,
+       SYSDATE);  
+       
+   EXCEPTION
+     WHEN DUP_VAL_ON_INDEX THEN
+       BEGIN
+         UPDATE ABASTECIMENTOCURSO
+            SET NR_PLACA = I_NR_PLACA,
+                CD_FRENTISTA = I_CD_FRENTISTA,
+                QT_ABASTECIDA = I_QT_ABASTECIDA,
+                DT_REFRESH = SYSDATE
+          WHERE CD_ABASTECIMENTO = IO_CD_ABASTECIMENTO;     
+       EXCEPTION
+         WHEN OTHERS THEN
+           O_MENSAGEM := 'Erro ao atualizar o abastecimento ' || IO_CD_ABASTECIMENTO || ': ' || SQLERRM;
+           RAISE E_GERAL;
+       END;
+     WHEN OTHERS THEN
+       O_MENSAGEM := 'Erro ao inserir o abastecimento: ' || SQLERRM;
+   END;
+   
+   COMMIT;
+   
+ EXCEPTION
+   WHEN E_GERAL THEN
+     ROLLBACK;
+     O_MENSAGEM := '[GARAVA_ABASTECIMENTO] ' || O_MENSAGEM;
+   WHEN OTHERS THEN
+     ROLLBACK;
+     O_MENSAGEM := '[GARAVA_ABASTECIMENTO] Erro no procedimento que insere o abastecimento: ' || SQLERRM;  
+ END;                                                                               
 end PACK_POSTO;
 /
