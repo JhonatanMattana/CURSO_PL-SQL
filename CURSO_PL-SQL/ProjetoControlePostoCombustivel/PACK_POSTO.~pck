@@ -35,7 +35,11 @@ create or replace package PACK_POSTO is
                                 I_CD_FRENTISTA      IN FRENTISTACURSO.CD_FRENTISTA%TYPE,
                                 I_QT_ABASTECIDA     IN ABASTECIMENTOCURSO.QT_ABASTECIDA%TYPE,
                                 I_KM_ABASTECIMENTO  IN ABASTECIMENTOCURSO.KM_ABASTECIMENTO%TYPE,
-                                O_MENSAGEM          OUT VARCHAR2);                           
+                                O_MENSAGEM          OUT VARCHAR2); 
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ PROCEDURE EXCLUI_PROPRIETARIO(I_CD_PROPRIETARIO IN PROPRIETARIOCURSO.CD_PROPRIETARIO%TYPE,
+                               O_MENSAGEM        OUT VARCHAR2);                                                          
 end PACK_POSTO;
 /
 create or replace package body PACK_POSTO is
@@ -498,7 +502,7 @@ create or replace package body PACK_POSTO is
        O_MENSAGEM := 'Erro ao inserir o abastecimento: ' || SQLERRM;
    END;
    
-   --COMMIT;
+   COMMIT;
    
  EXCEPTION
    WHEN E_GERAL THEN
@@ -507,6 +511,92 @@ create or replace package body PACK_POSTO is
    WHEN OTHERS THEN
      ROLLBACK;
      O_MENSAGEM := '[GARAVA_ABASTECIMENTO] Erro no procedimento que insere o abastecimento: ' || SQLERRM;  
- END;                                                                               
+ END;      
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ PROCEDURE EXCLUI_PROPRIETARIO(I_CD_PROPRIETARIO IN PROPRIETARIOCURSO.CD_PROPRIETARIO%TYPE,
+                               O_MENSAGEM        OUT VARCHAR2) IS
+   E_GERAL EXCEPTION;
+   V_COUNT NUMBER;
+ BEGIN
+   BEGIN
+     SELECT COUNT(*)
+       INTO V_COUNT
+       FROM VEICULOCURSO
+      WHERE VEICULOCURSO.CD_PROPRIETARIO = I_CD_PROPRIETARIO;
+   EXCEPTION
+     WHEN OTHERS THEN
+       V_COUNT := 0;
+   END;  
+   
+   IF V_COUNT > 0 THEN
+     O_MENSAGEM := 'O proprietário nao pode ser excluído, pois existem veículos 
+     cadastrados que pertencem a ele';
+     RAISE E_GERAL;
+   END IF;
+   
+   BEGIN
+     DELETE PROPRIETARIOCURSO
+      WHERE CD_PROPRIETARIO = I_CD_PROPRIETARIO;
+   EXCEPTION
+     WHEN OTHERS THEN
+       O_MENSAGEM := 'Erro ao excluír o proprietário ' || I_CD_PROPRIETARIO || ': ' || SQLERRM;
+       RAISE E_GERAL;
+   END;
+   
+ EXCEPTION
+   WHEN E_GERAL THEN
+     ROLLBACK;
+     O_MENSAGEM := '[EXCLUI_PROPRIETARIO] ' || O_MENSAGEM;  
+     
+   WHEN OTHERS THEN
+     ROLLBACK;
+     O_MENSAGEM := '[EXCLUI_PROPRIETARIO] Erro no procedimento de exclusao do proprietário: ' || SQLERRM;
+ END; 
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ PROCEDURE EXCLUI_COMBUSTIVEL(I_CD_COMBUSTIVEL IN COMBUSTIVELCURSO.CD_COMBUSTIVEL%TYPE,
+                               O_MENSAGEM        OUT VARCHAR2) IS
+   E_GERAL EXCEPTION;
+   V_COUNT NUMBER;
+ BEGIN
+   BEGIN
+     SELECT COUNT(*)
+       INTO V_COUNT
+       FROM VEICULOCURSO
+      WHERE VEICULOCURSO.CD_COMBUSTIVEL = I_CD_COMBUSTIVEL;
+   EXCEPTION
+     WHEN OTHERS THEN
+       V_COUNT := 0;
+   END;  
+   
+   IF V_COUNT > 0 THEN
+     O_MENSAGEM := 'O combustível nao pode ser excluído, pois existem veículos 
+     associados a ele';
+     RAISE E_GERAL;
+   END IF;
+   
+   BEGIN
+     DELETE COMBUSTIVELCURSO
+      WHERE CD_COMBUSTIVEL = I_CD_COMBUSTIVEL;
+   EXCEPTION
+     WHEN OTHERS THEN
+       O_MENSAGEM := 'Erro ao excluír o combustível ' || I_CD_COMBUSTIVEL || ': ' || SQLERRM;
+       RAISE E_GERAL;
+   END;
+   
+ EXCEPTION
+   WHEN E_GERAL THEN
+     ROLLBACK;
+     O_MENSAGEM := '[EXCLUI_COMBUSTIVEL] ' || O_MENSAGEM;  
+     
+   WHEN OTHERS THEN
+     ROLLBACK;
+     O_MENSAGEM := '[EXCLUI_COMBUSTIVEL] Erro no procedimento de exclusao do combustível: ' || SQLERRM;
+ END;                                                                                                          
 end PACK_POSTO;
 /
